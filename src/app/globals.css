@@ -41,6 +41,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Custom colors from shared constants */
+  --color-custom-primary: #7070F0;
+  --color-custom-primary-dark: #5A5AD1;
+  --color-custom-accent: #ECD872;
+  --color-custom-bg: rgba(112,112,240,0.10);
+  --color-custom-border: #ECECEE;
+  --color-custom-dark-nav: #1E293B;
+  --color-custom-fg: #222222;
 }
 
 :root {
