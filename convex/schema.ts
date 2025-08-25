@@ -635,4 +635,99 @@ userReportStatusChanges: defineTable({
 })
   .index("by_report", ["reportId"])
   .index("by_changed_at", ["changedAt"]),
+
+// ---------- Organizations ----------
+organizations: defineTable({
+  name: v.string(),
+  code: v.string(),                     // 4-char org code, UPPERCASE A-Z0-9 (unique globally)
+  description: v.optional(v.string()),
+  domain: v.optional(v.string()),       // e.g. "awesomehack.org"
+  countryCode: v.optional(v.string()),
+  subdivisionCode: v.optional(v.string()),
+  contactEmail: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_code", ["code"])
+  .index("by_domain", ["domain"]),
+
+// Optional: who can manage an org
+organizationMembers: defineTable({
+  organizationId: v.id("organizations"),
+  userId: v.id("users"),
+  role: v.union(
+    v.literal("owner"),
+    v.literal("admin"),
+    v.literal("manager"),
+    v.literal("viewer")
+  ),
+  joinedAt: v.number(),
+})
+  .index("by_org", ["organizationId"])
+  .index("by_user", ["userId"])
+  .index("by_org_user", ["organizationId", "userId"]),
+
+// ---------- Events (per organization) ----------
+events: defineTable({
+  organizationId: v.id("organizations"),
+  name: v.string(),
+  code: v.string(),                     // 4-char event code, unique per organization
+  description: v.optional(v.string()),
+  timezone: v.optional(v.string()),    // e.g. "Australia/Melbourne"
+  startsAt: v.optional(v.number()),
+  endsAt: v.optional(v.number()),
+  // lifecycle
+  status: v.optional(v.union(
+    v.literal("draft"),
+    v.literal("published"),
+    v.literal("running"),
+    v.literal("ended"),
+    v.literal("archived")
+  )),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_org", ["organizationId"])
+  .index("by_org_code", ["organizationId", "code"])
+  .index("by_starts_at", ["startsAt"]),
+
+// (Optional but handy) link a project to an event directly.
+// Keep optional so your existing projects don't break.
+ /* If want it, uncomment and re-migrate:
+projects: defineTable({
+  ...existing fields...,
+  eventId: v.optional(v.id("events")),
+}).index("by_event", ["eventId"]);
+*/
+
+// ---------- Invitation Codes (bridge: org ↔ event ↔ project) ----------
+invitations: defineTable({
+  organizationId: v.id("organizations"),
+  eventId: v.id("events"),
+  projectId: v.id("projects"),
+
+  // store split + full code for validation & fast lookups
+  orgCode: v.string(),                 // ####
+  eventCode: v.string(),               // &&&&
+  projectCode: v.string(),             // ********** (10+ chars)
+  fullCode: v.string(),                // "####-&&&&-**********" (UPPERCASE)
+
+  // lifecycle
+  status: v.union(                     // keep simple; expand if needed
+    v.literal("active"),
+    v.literal("claimed"),
+    v.literal("revoked"),
+    v.literal("expired")
+  ),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  expiresAt: v.optional(v.number()),
+  claimedAt: v.optional(v.number()),
+  claimedByUserId: v.optional(v.id("users")),  // who used the code
+})
+  .index("by_full_code", ["fullCode"])
+  .index("by_org", ["organizationId"])
+  .index("by_event", ["eventId"])
+  .index("by_project", ["projectId"])
+  .index("by_status", ["status"]),
 });
