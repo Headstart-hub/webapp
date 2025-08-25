@@ -1,14 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { 
+  userBasicInfoValidator,
+  userProfileUpdateValidator
+} from "./schema";
 
 // Create or update a user
 export const upsertUser = mutation({
-  args: {
-    name: v.string(),
-    email: v.string(),
-    imageUrl: v.optional(v.string()),
-    clerkId: v.string(),
-  },
+  args: userBasicInfoValidator,
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -21,23 +20,16 @@ export const upsertUser = mutation({
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
-    if (existingUser) {
-      // Update existing user
-      return await ctx.db.patch(existingUser._id, {
-        name: args.name,
-        email: args.email,
-        imageUrl: args.imageUrl,
-        updatedAt: Date.now(),
-      });
-    } else {
+    if (!existingUser) {
       // Create new user
       return await ctx.db.insert("users", {
-        name: args.name,
+        firstName: args.firstName,
+        lastName: args.lastName,
         email: args.email,
         imageUrl: args.imageUrl,
         clerkId: args.clerkId,
         profileCompleted: false,
-        profileCompletionStep: 0,
+        profileCompletionStep: "basic",
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -47,14 +39,8 @@ export const upsertUser = mutation({
 
 // Complete user profile
 export const completeProfile = mutation({
-  args: {
-    bio: v.optional(v.string()),
-    interests: v.optional(v.array(v.string())),
-    location: v.optional(v.string()),
-    occupation: v.optional(v.string()),
-    experienceLevel: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
@@ -68,20 +54,49 @@ export const completeProfile = mutation({
     if (!user) {
       throw new Error("User not found");
     }
-
     return await ctx.db.patch(user._id, {
-      ...args,
       profileCompleted: true,
-      profileCompletionStep: 1,
+      profileCompletionStep: "complete",
       updatedAt: Date.now(),
     });
   },
 });
 
-// Update profile completion step
-export const updateProfileStep = mutation({
+
+// Update profile data during signup process
+export const updateProfileData = mutation({
+  args: userProfileUpdateValidator,
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+
+    // Only include fields that were provided in args
+    const update: Record<string, unknown> = { updatedAt: Date.now() };
+    for (const key of Object.keys(args)) {
+      const value = (args as any)[key];
+      if (value !== undefined) update[key] = value;
+    }
+
+    return await ctx.db.patch(user._id, update);
+  },
+});
+
+// Update profile picture
+export const updateProfilePicture = mutation({
   args: {
-    step: v.number(),
+    profilePicture: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -99,7 +114,7 @@ export const updateProfileStep = mutation({
     }
 
     return await ctx.db.patch(user._id, {
-      profileCompletionStep: args.step,
+      profilePicture: args.profilePicture,
       updatedAt: Date.now(),
     });
   },
