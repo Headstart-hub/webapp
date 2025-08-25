@@ -50,6 +50,10 @@
   --color-custom-border: #ECECEE;
   --color-custom-dark-nav: #1E293B;
   --color-custom-fg: #222222;
+  /* Primary gradient */
+  --gradient-primary: linear-gradient(135deg,#6366f1 0%,#22d3ee 100%);
+  /* Darker hover gradient */
+  --gradient-primary-dark: linear-gradient(135deg,#4f46e5 0%,#06b6d4 100%);
 }
 
 :root {
@@ -127,5 +131,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-primary-gradient {
+    background: var(--gradient-primary);
+  }
+  .hover\:bg-primary-gradient-dark:hover {
+    background: var(--gradient-primary-dark);
   }
 }
