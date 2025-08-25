@@ -6,8 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-mulish);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,17 +42,18 @@
   --radius-xl: calc(var(--radius) + 4px);
   
   /* Custom colors from shared constants */
-  --color-custom-primary: #7070F0;
-  --color-custom-primary-dark: #5A5AD1;
-  --color-custom-accent: #ECD872;
-  --color-custom-bg: rgba(112,112,240,0.10);
-  --color-custom-border: #ECECEE;
-  --color-custom-dark-nav: #1E293B;
-  --color-custom-fg: #222222;
+  --color-custom-primary: var(--custom-primary);
+  --color-custom-accent: var(--custom-accent);
+  --color-custom-nav: var(--custom-nav);
+  --color-custom-fg: var(--custom-fg);
+  --color-custom-fg-2: var(--custom-fg-2);
+  --color-custom-bg: var(--custom-bg);
+  --color-custom-card: var(--custom-card);
 }
 
 :root {
   --radius: 0.625rem;
+  --radius-round: 50px;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -85,6 +85,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Custom styling variables */
+  --custom-primary: rgba(112, 112, 240, 1);
+  --custom-accent: rgba(255, 200, 94, 1);
+  --custom-nav: rgba(30, 41, 59, 1);
+  --custom-fg: rgba(34, 34, 34, 1);
+  --custom-fg-2: rgba(102, 102, 102, 1);
+  --custom-bg: rgba(243, 241, 250, 1);
+  --custom-card: rgba(255, 255, 255, 1);
 }
 
 .dark {
@@ -119,6 +128,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Custom styling variables */
+  --custom-primary: rgba(112, 112, 240, 1);
+  --custom-accent: rgba(255, 200, 94, 1);
+  --custom-nav: rgba(30, 41, 59, 1);
+  --custom-fg: rgba(255, 255, 255, 1);
+  --custom-fg-2: rgba(153, 153, 153, 1);
+  --custom-bg: rgba(34, 34, 34, 1);
+  --custom-card: rgba(46, 46, 46, 1);
 }
 
 @layer base {
@@ -128,4 +146,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ==================================== ALERTIFY ==================================== */
+.alertify-notifier .ajs-message {
+  color: var(--custom-card);
+  border-radius: var(--radius-round);
+  padding: 1rem;
+  text-align: center;
+  font-weight: 700;
 }
