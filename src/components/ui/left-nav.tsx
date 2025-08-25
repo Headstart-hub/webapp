@@ -9,10 +9,9 @@ import { usePathname } from "next/navigation";
 
 interface LeftNavProps {
   currentView: string;
-  onViewChange?: (view: View) => void;
 }
 
-export const LeftNav: FC<LeftNavProps> = ({ currentView, onViewChange }) => {
+export const LeftNav: FC<LeftNavProps> = ({ currentView }) => {
   const pathname = usePathname();
   const items = [
     {
@@ -32,7 +31,6 @@ export const LeftNav: FC<LeftNavProps> = ({ currentView, onViewChange }) => {
       icon: Rocket,
       href: "/projects",
       active: currentView === "projects" || pathname.startsWith("/projects"),
-      action: () => onViewChange && onViewChange("projects"),
     },
     {
       label: "Applications",
@@ -40,7 +38,6 @@ export const LeftNav: FC<LeftNavProps> = ({ currentView, onViewChange }) => {
       href: "/applications",
       active:
         currentView === "applications" || pathname.startsWith("/applications"),
-      action: () => onViewChange && onViewChange("applications"),
     },
     { label: "Communities", icon: Users, href: "#", active: false },
     { label: "Messages", icon: MessageSquare, href: "#", active: false },
@@ -57,7 +54,6 @@ export const LeftNav: FC<LeftNavProps> = ({ currentView, onViewChange }) => {
               <li key={it.label}>
                 <Link
                   href={it.href}
-                  onClick={it.action}
                   className={
                     "flex w-full items-center gap-3 rounded-full px-4 py-3 text-sm transition border " +
                     (active
