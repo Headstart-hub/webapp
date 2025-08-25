@@ -28,7 +28,9 @@ function Content() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold mb-6">Welcome, {user.name}! 👋</h1>
+          <h1 className="text-3xl font-bold mb-6">
+            Welcome, {user.firstName}! 👋
+          </h1>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-blue-50 p-6 rounded-lg">
@@ -69,15 +71,34 @@ function Content() {
                 )}
               </div>
             </div>
-          </div>
 
-          {user.bio && (
-            <div className="mt-6 bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-3">About You</h2>
-              <p className="text-gray-700">{user.bio}</p>
+            <div className="bg-purple-50 p-6 rounded-lg">
+              <h2 className="text-xl font-semibold mb-3 text-purple-800">
+                Technical Skills
+              </h2>
+              <div className="flex flex-wrap gap-2"></div>
+              {user.technicalSkills && user.technicalSkills.length > 0 ? (
+                user.technicalSkills.map((skill, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <p className="text-purple-700">No technical skills specified</p>
+              )}
             </div>
-          )}
+          </div>
         </div>
+
+        {user.bio && (
+          <div className="mt-6 bg-gray-50 p-6 rounded-lg">
+            <h2 className="text-xl font-semibold mb-3">About You</h2>
+            <p className="text-gray-700">{user.bio}</p>
+          </div>
+        )}
       </div>
     </div>
   );

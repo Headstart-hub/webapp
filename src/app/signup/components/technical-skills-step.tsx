@@ -107,6 +107,7 @@ export function TechnicalSkillsStep({
     await updateProfileData({
       technicalSkills: values.technicalSkills,
       profileCompletionStep: SignupStep.COMPLETE,
+      profileCompleted: true,
     });
     nextStep();
   });

@@ -53,6 +53,7 @@ export const userProfileUpdateValidator = {
   occupation: v.optional(v.string()),
   experienceLevel: v.optional(v.string()),
   profileCompletionStep: v.optional(v.union(v.literal("basic"), v.literal("interests"), v.literal("technicalSkills"), v.literal("complete"))),
+  profileCompleted: v.optional(v.boolean()),
 };
 
 export default defineSchema({
