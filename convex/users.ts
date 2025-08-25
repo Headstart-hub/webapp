@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { 
   userBasicInfoValidator,
   userProfileUpdateValidator
-} from "./schema";
+} from "./schemas/user_schema";
 
 // Create or update a user
 export const upsertUser = mutation({
