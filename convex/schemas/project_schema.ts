@@ -2,7 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 // ---------- Projects Validators ----------
-export const projectValidator = {
+export const projectSchema = {
   name: v.string(),
   ownerId: v.id("users"),
   description: v.optional(v.string()),
@@ -29,11 +29,18 @@ export const projectUpdateValidator = {
 };
 
 // ---------- Table Definitions (for compose in main schema) ----------
-export const projectTable = defineTable(projectValidator)
+export const projectTable = defineTable(projectSchema)
   .index("by_name", ["name"])
   .index("by_owner", ["ownerId"])
   .index("by_status", ["status"])
   .index("by_created_at", ["createdAt"]);
 
 
+
+
+  export default defineTable(projectSchema)
+  .index("by_name", ["name"])
+  .index("by_owner", ["ownerId"])
+  .index("by_status", ["status"])
+  .index("by_created_at", ["createdAt"]);
 

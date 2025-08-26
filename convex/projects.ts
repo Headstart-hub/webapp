@@ -110,3 +110,31 @@ export const listMy = query({
     );
   },
 });
+
+// Fetch a single project by id with basic owner info
+export const getById = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) return null;
+
+    const owner = await ctx.db.get(project.ownerId);
+    return {
+      _id: project._id,
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      teamMemberCount: project.teamMemberCount,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      owner: owner
+        ? {
+            _id: owner._id,
+            firstName: owner.firstName,
+            lastName: owner.lastName,
+            imageUrl: owner.imageUrl,
+          }
+        : null,
+    };
+  },
+});
