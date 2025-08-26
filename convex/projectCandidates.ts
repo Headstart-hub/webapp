@@ -1,4 +1,4 @@
-import { mutation, action } from "./_generated/server";
+import { mutation, action, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
@@ -7,11 +7,16 @@ import {
   CandidateSource,
 } from "./schemas/projectCandidate_schema";
 
-function generateInviteToken(): string {
-  // Lightweight token suitable for short-lived invites
-  const random = Math.random().toString(36).slice(2);
-  const timestamp = Date.now().toString(36);
-  return `${timestamp}.${random}`;
+async function generateUniqueInviteToken(ctx: any): Promise<string> {
+  for (let i = 0; i < 5; i++) {
+    const token = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
+    const exists = await ctx.db
+      .query("projectCandidates")
+      .withIndex("by_invite_token", (q: any) => q.eq("inviteToken", token))
+      .first();
+    if (!exists) return token;
+  }
+  throw new Error("Failed to generate unique invite token");
 }
 
 // Create a candidate entry: supports direct application, direct invite, and referral invite
@@ -56,7 +61,7 @@ export const createCandidate = mutation({
         userId: args.userId,
         source: "direct_invite" as CandidateSource,
         invitedByUserId: actor._id,
-        inviteToken: generateInviteToken(),
+        inviteToken: await generateUniqueInviteToken(ctx),
         inviteExpiresAt: now + sevenDaysMs,
         invitationStatus: "pending",
         coverLetter: args.coverLetter,
@@ -73,7 +78,7 @@ export const createCandidate = mutation({
         source: "referral_invite" as CandidateSource,
         referralByUserId: args.referralByUserId,
         invitedByUserId: actor._id,
-        inviteToken: generateInviteToken(),
+        inviteToken: await generateUniqueInviteToken(ctx),
         inviteExpiresAt: now + sevenDaysMs,
         invitationStatus: "pending",
         coverLetter: args.coverLetter,
@@ -149,7 +154,7 @@ export const createDirectInvite = mutation({
       };
     }
 
-    const inviteToken = generateInviteToken();
+    const inviteToken = await generateUniqueInviteToken(ctx);
     let candidateId: string;
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -179,68 +184,50 @@ export const createDirectInvite = mutation({
   },
 });
 
-// Action: Create direct invite then call external email service/webhook
-export const createDirectInviteAndEmail = action({
+export const getCandidateByProjectId = query({
   args: {
     projectId: v.id("projects"),
-    email: v.string(),
-    expiresInDays: v.optional(v.number()),
-    inviteUrlBase: v.string(), // e.g., https://yourapp.com/invite
   },
-  handler: async (
-    ctx,
-    args: {
-      projectId: Id<"projects">;
-      email: string;
-      expiresInDays?: number;
-      inviteUrlBase: string;
-    }
-  ): Promise<{
-    candidateId: string;
-    inviteToken: string;
-    inviteExpiresAt: number;
-    inviteLink: string;
-    userId: Id<"users">;
-  }> => {
-    const { projectId, expiresInDays, email, inviteUrlBase } = args;
+  handler: async (ctx, args) => {
+    return await ctx.db.query("projectCandidates").withIndex("by_project", (q) => q.eq("projectId", args.projectId)).collect();
+  },
+});
 
-    // First, create/refresh the invite inside a mutation (transactional)
-    const { candidateId, inviteToken, inviteExpiresAt, userId } = await ctx.runMutation(
-      api.projectCandidates.createDirectInvite,
-      { projectId, email, expiresInDays }
-    );
+// List candidates for a project with basic user details
+export const listByProjectWithUsers = query({
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const candidates = await ctx.db
+      .query("projectCandidates")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
 
-    // Build invite link
-    const inviteLink = `${inviteUrlBase}?token=${encodeURIComponent(
-      inviteToken
-    )}&projectId=${projectId}`;
+    const usersMap = new Map();
+    const result = [] as Array<any>;
 
-    // Send email via external service (webhook pattern)
-    const webhookUrl = process.env.EMAIL_INVITE_WEBHOOK_URL;
-    if (!webhookUrl) {
-      throw new Error("EMAIL_INVITE_WEBHOOK_URL is not configured");
-    }
-
-    // Post minimal payload to your email service
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: "direct_project_invite",
-        email,
-        inviteLink,
-        inviteExpiresAt,
-        projectId,
-        userId: userId as Id<"users">,
-        candidateId,
-      }),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`Email webhook failed: ${res.status} ${text}`);
+    for (const c of candidates) {
+      let user = usersMap.get(c.userId as string);
+      if (!user) {
+        user = await ctx.db.get(c.userId);
+        if (user) usersMap.set(c.userId as string, user);
+      }
+      result.push({
+        ...c,
+        user: user
+          ? {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              imageUrl: user.imageUrl,
+              email: user.email,
+            }
+          : null,
+      });
     }
 
-    return { candidateId, inviteToken, inviteExpiresAt, inviteLink, userId };
+    return result;
   },
 });
 

@@ -57,7 +57,8 @@ export const projectCandidatesTable = defineTable(projectCandidateSchema)
   .index("by_user", ["userId"]) // list a user's candidacies
   .index("by_status", ["recruitmentStatusId"]) // stage filtering
   .index("by_project_user", ["projectId", "userId"]) // uniqueness enforcement
-  .index("by_applied_at", ["appliedAt"]);
+  .index("by_applied_at", ["appliedAt"]) // application time
+  .index("by_invite_token", ["inviteToken"]); // ensure inviteToken lookups/uniqueness
 
 // ---------- Args/validators for mutations ----------
 export const candidateCreateArgs = {
