@@ -145,52 +145,54 @@ export default function ProjectsPage() {
             }
           >
             {filtered!.map((p: any) => (
-              <Card key={p._id} className="rounded-xl">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      <div
-                        className="text-base font-semibold"
-                        style={{ color: COLORS.fg }}
-                      >
-                        {p.name}
-                      </div>
-                      {p.description ? (
-                        <div className="text-sm text-black/60 truncate">
-                          {p.description}
+              <Link key={p._id} href={`/projects/${p._id}`} className="block">
+                <Card className="rounded-xl hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="min-w-0">
+                        <div
+                          className="text-base font-semibold"
+                          style={{ color: COLORS.fg }}
+                        >
+                          {p.name}
                         </div>
-                      ) : null}
-                      <div className="mt-3 flex items-center gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage
-                              src={p.owner?.imageUrl ?? undefined}
-                              alt=""
-                            />
-                            <AvatarFallback>
-                              {String(p.owner?.firstName ?? "").slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-black/70">
-                            {p.owner
-                              ? `${String(p.owner.firstName)} ${String(p.owner.lastName)}`
-                              : "Unknown"}
+                        {p.description ? (
+                          <div className="text-sm text-black/60 truncate">
+                            {p.description}
+                          </div>
+                        ) : null}
+                        <div className="mt-3 flex items-center gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage
+                                src={p.owner?.imageUrl ?? undefined}
+                                alt=""
+                              />
+                              <AvatarFallback>
+                                {String(p.owner?.firstName ?? "").slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-black/70">
+                              {p.owner
+                                ? `${String(p.owner.firstName)} ${String(p.owner.lastName)}`
+                                : "Unknown"}
+                            </span>
+                          </div>
+                          <span
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs border"
+                            style={{ borderColor: COLORS.border }}
+                          >
+                            {p.status}
+                          </span>
+                          <span className="text-black/60">
+                            Updated {new Date(p.updatedAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs border"
-                          style={{ borderColor: COLORS.border }}
-                        >
-                          {p.status}
-                        </span>
-                        <span className="text-black/60">
-                          Updated {new Date(p.updatedAt).toLocaleDateString()}
-                        </span>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
