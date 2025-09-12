@@ -10,9 +10,6 @@ import * as Common from "@clerk/elements/common";
 import Logo from "@/components/ui/logo";
 import PrimaryButton from "./ui/primarybutton";
 
-import { FcGoogle } from "react-icons/fc";
-import GitHubIcon from '@mui/icons-material/GitHub';
-
 import "alertifyjs/build/css/alertify.min.css";
 import AuthForm from "./auth/AuthForm";
 
@@ -28,7 +25,7 @@ export default function LandingPage() {
             <Logo variant={ "full" } />
           </div>
           <div className="md:flex md:justify-center">
-            <div className="mt-18 md:w-3/5 lg:w-4/5">
+            <div className="mt-14 md:w-3/5 lg:w-4/5">
 
               {/* ============== SIGN IN ============== */}
               {page === "signIn" && (
@@ -37,9 +34,9 @@ export default function LandingPage() {
                   <span className="text-custom-fg text-base font-medium">Sign in to your Headstart account.</span>
                   <SignIn.Root>
                     <SignIn.Step name="start" asChild>
-                      <div className="mt-18 flex flex-col justify-center items-center">
+                      <div className="mt-14 flex flex-col justify-center items-center">
                         <AuthForm mode="signIn" setPage={ setPage } />
-                        <div className="w-full mt-6">
+                        {/* <div className="w-full mt-6">
                           <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
                             <div className="border-1 border-custom-fg w-full"></div>
                             <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
@@ -53,12 +50,12 @@ export default function LandingPage() {
                               <PrimaryButton variant="outlined" startIcon={ <GitHubIcon /> }>GitHub</PrimaryButton>
                             </Common.Connection>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </SignIn.Step>
                   </SignIn.Root>
 
-                  <p className="mt-18 text-center text-custom-fg text-base font-medium">
+                  <p className="mt-14 text-center text-custom-fg text-base font-medium">
                     Don't have an account?{" "}
                     <button
                       type="button"
@@ -84,9 +81,9 @@ export default function LandingPage() {
                   <span className="text-custom-fg text-base font-medium">We are pleased to have you join us.</span>
                     <SignUp.Root>
                       <SignUp.Step name="start" asChild>
-                        <div className="mt-18 flex flex-col justify-center items-center">
+                        <div className="mt-14 flex flex-col justify-center items-center">
                           <AuthForm mode="signUp" setPage={ setPage } />
-                          <div className="w-full mt-6">
+                          {/* <div className="w-full mt-6">
                             <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
                               <div className="border-1 border-custom-fg w-full"></div>
                               <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
@@ -100,11 +97,11 @@ export default function LandingPage() {
                                 <PrimaryButton variant="outlined" startIcon={ <GitHubIcon /> }>GitHub</PrimaryButton>
                               </Common.Connection>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </SignUp.Step>
                     </SignUp.Root>
-                  <p className="mt-18 text-center text-custom-fg text-base font-medium">
+                  <p className="mt-14 text-center text-custom-fg text-base font-medium">
                     Already have an account?{" "}
                     <button
                       type="button"
@@ -123,7 +120,7 @@ export default function LandingPage() {
                 <>
                   <h1 className="text-custom-fg text-3xl font-black">Forgot your password?</h1>
                   <span className="text-custom-fg text-base font-medium">Enter your email and we can help you recover your account.</span>
-                  <div className="mt-18 flex flex-col justify-center items-center">
+                  <div className="mt-14 flex flex-col justify-center items-center">
                     
                   </div>
                   <p className="text-center text-custom-fg text-base font-medium">
