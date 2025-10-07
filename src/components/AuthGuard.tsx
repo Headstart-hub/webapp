@@ -17,7 +17,7 @@ export default function AuthGuard({
   requireAuth = true,
   requireProfile = true,
 }: AuthGuardProps) {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user: authUser } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const user = useQuery(api.users.getCurrentUser);

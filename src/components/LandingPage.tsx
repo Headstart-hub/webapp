@@ -1,113 +1,174 @@
 "use client";
 
-import { SignInButton } from "@clerk/nextjs";
+import { useState } from "react";
+
+import * as SignIn from "@clerk/elements/sign-in";
+import * as SignUp from "@clerk/elements/sign-up";
+import * as Common from "@clerk/elements/common";
+
+import Logo from "@/components/ui/logo";
+import PrimaryButton from "./ui/primarybutton";
+
+import "alertifyjs/build/css/alertify.min.css";
+import AuthForm from "./auth/AuthForm";
 
 export default function LandingPage() {
+  const [page, setPage] = useState<"signIn" | "signUp" | "forgotPassword">("signIn");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Welcome to <span className="text-blue-600">HeadStart</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Your journey to success starts here. Connect with like-minded
-            professionals, share your expertise, and grow your network in the
-            tech community.
-          </p>
-          <div className="flex justify-center gap-4">
-            <SignInButton mode="modal">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
-                Get Started
-              </button>
-            </SignInButton>
-            <button className="border border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
-              Learn More
-            </button>
+    <div className="min-h-screen">
+      <div className="flex flex-col md:flex-col lg:flex-row-reverse p-6 gap-6 md:items-center lg:items-stretch min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* ============== INPUT AREA ============== */}
+        <div className="flex-1 w-full">
+          <div className="flex h-13">
+            <Logo variant={ "full" } />
+          </div>
+          <div className="md:flex md:justify-center">
+            <div className="mt-14 md:w-3/5 lg:w-4/5">
+
+              {/* ============== SIGN IN ============== */}
+              {page === "signIn" && (
+                <>
+                  <h1 className="text-custom-fg text-3xl font-black">Welcome back!</h1>
+                  <span className="text-custom-fg text-base font-medium">Sign in to your Headstart account.</span>
+                  <SignIn.Root>
+                    <SignIn.Step name="start" asChild>
+                      <div className="mt-14 flex flex-col justify-center items-center">
+                        <AuthForm mode="signIn" setPage={ setPage } />
+                        {/* <div className="w-full mt-6">
+                          <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
+                            <div className="border-1 border-custom-fg w-full"></div>
+                            <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
+                            <div className="border-1 border-custom-fg w-full"></div>
+                          </div>
+                          <div className="flex flex-1 flex-row mt-3 gap-6 w-full items-center justify-center">
+                            <Common.Connection name="google" asChild>
+                              <PrimaryButton variant="outlined" startIcon={ <FcGoogle /> }>Google</PrimaryButton>
+                            </Common.Connection>
+                            <Common.Connection name="github" asChild>
+                              <PrimaryButton variant="outlined" startIcon={ <GitHubIcon /> }>GitHub</PrimaryButton>
+                            </Common.Connection>
+                          </div>
+                        </div> */}
+                      </div>
+                    </SignIn.Step>
+                  </SignIn.Root>
+
+                  <p className="mt-14 text-center text-custom-fg text-base font-medium">
+                    Don&apos;t have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setPage("signUp")}
+                      className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+                    >
+                      Sign Up
+                    </button>
+                  </p>
+                </>
+              )}
+
+
+              {/* ============== SIGN UP ============== */}
+              {page === "signUp" && (
+                <>
+                  <div className="flex gap-2">
+                    <h1 className="text-custom-fg text-3xl font-black">Welcome to</h1>
+                    <div className="flex h-10">
+                      <Logo variant={ "wordmark" } />
+                    </div>
+                  </div>
+                  <span className="text-custom-fg text-base font-medium">We are pleased to have you join us.</span>
+                    <SignUp.Root>
+                      <SignUp.Step name="start" asChild>
+                        <div className="mt-14 flex flex-col justify-center items-center">
+                          <AuthForm mode="signUp" setPage={ setPage } />
+                          {/* <div className="w-full mt-6">
+                            <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
+                              <div className="border-1 border-custom-fg w-full"></div>
+                              <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
+                              <div className="border-1 border-custom-fg w-full"></div>
+                            </div>
+                            <div className="flex flex-1 flex-row mt-3 gap-6 w-full items-center justify-center">
+                              <Common.Connection name="google" asChild>
+                                <PrimaryButton variant="outlined" startIcon={ <FcGoogle /> }>Google</PrimaryButton>
+                              </Common.Connection>
+                              <Common.Connection name="github" asChild>
+                                <PrimaryButton variant="outlined" startIcon={ <GitHubIcon /> }>GitHub</PrimaryButton>
+                              </Common.Connection>
+                            </div>
+                          </div> */}
+                        </div>
+                      </SignUp.Step>
+                    </SignUp.Root>
+                  <p className="mt-14 text-center text-custom-fg text-base font-medium">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setPage("signIn")}
+                      className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </>
+              )}
+
+
+              {/* ============== FORGOT PASSWORD ============== */}
+              {page === "forgotPassword" && (
+                <>
+                  <h1 className="text-custom-fg text-3xl font-black">Forgot your password?</h1>
+                  <span className="text-custom-fg text-base font-medium">Enter your email and we can help you recover your account.</span>
+                  <div className="mt-14 flex flex-col justify-center items-center">
+                    
+                  </div>
+                  <p className="text-center text-custom-fg text-base font-medium">
+                    Remembered your password?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setPage("signIn")}
+                      className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Connect</h3>
-            <p className="text-gray-600">
-              Build meaningful connections with professionals in your field
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Learn</h3>
-            <p className="text-gray-600">
-              Discover new skills and knowledge from industry experts
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <svg
-                className="w-6 h-6 text-purple-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Grow</h3>
-            <p className="text-gray-600">
-              Accelerate your career with personalized opportunities
-            </p>
-          </div>
+        {/* ============== CAROUSEL ============== */}
+        <div className="flex-1 md:w-3/5 lg:w-full">
+          carousel
         </div>
+      </div>
 
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Ready to get started?
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Join thousands of professionals who are already growing their
-            network
-          </p>
-          <SignInButton mode="modal">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-              Sign Up Now
-            </button>
-          </SignInButton>
+      {/* ============== FOOTER ============== */}
+      <div className="flex flex-col-reverse lg:flex-row p-6 gap-4 bg-custom-nav font-medium justify-center text-center">
+        <span className="text-white text-base">Headstart &copy; {new Date().getFullYear()}</span>
+        <div className="flex flex-wrap space-x-4 space-y-2 lg:space-y-0 justify-center [&>a]:whitespace-nowrap">
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to about page">
+            About
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to accessibility page">
+            Accessibility
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to cookie policy page">
+            Cookie Policy
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to copyright policy page">
+            Copyright Policy
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to privacy policy page">
+            Privacy Policy
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to terms of service page">
+            Terms of Service
+          </a>
+          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to help centre page">
+            Help Centre
+          </a>
         </div>
       </div>
     </div>
