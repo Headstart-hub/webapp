@@ -197,7 +197,7 @@ export function TechnicalSkillsStep({
             className="block text-sm font-medium mb-2"
             style={{ color: COLORS.fg }}
           >
-            Upload CV (optional, .txt only) — we'll try to prefill
+            Upload CV (optional, .txt only) — we&apos;ll try to prefill
           </label>
           <input type="file" accept=".txt" onChange={onUploadCv} />
         </div>
