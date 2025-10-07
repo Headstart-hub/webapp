@@ -56,11 +56,12 @@ export default function AuthForm({
       } else {
         (await getAlertify()).message("Further verification required.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
       const msg =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
-        err?.message ||
+        e?.errors?.[0]?.longMessage ||
+        e?.errors?.[0]?.message ||
+        e?.message ||
         "Invalid username or password.";
       (await getAlertify()).error(msg);
     } finally {
@@ -115,11 +116,12 @@ export default function AuthForm({
             );
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
       const msg =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
-        err?.message ||
+        e?.errors?.[0]?.longMessage ||
+        e?.errors?.[0]?.message ||
+        e?.message ||
         "Could not create your account.";
       (await getAlertify()).error(msg);
     } finally {
@@ -142,11 +144,12 @@ export default function AuthForm({
           "Still waiting for verification. Check your inbox/spam and try again."
         );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
       const msg =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
-        err?.message ||
+        e?.errors?.[0]?.longMessage ||
+        e?.errors?.[0]?.message ||
+        e?.message ||
         "We couldn't confirm your email yet.";
       (await getAlertify()).error(msg);
     } finally {
@@ -165,11 +168,12 @@ export default function AuthForm({
         redirectUrl: `${origin}/email-verify`,
       });
       (await getAlertify()).success("Verification link re-sent.");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
       const msg =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
-        err?.message ||
+        e?.errors?.[0]?.longMessage ||
+        e?.errors?.[0]?.message ||
+        e?.message ||
         "Unable to resend the link.";
       (await getAlertify()).error(msg);
     } finally {

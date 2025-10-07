@@ -6,7 +6,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "@/theme";
 import "alertifyjs/build/css/alertify.min.css";
 
-let alertifyPromise: Promise<any> | null = null;
+let alertifyPromise: Promise<typeof import("alertifyjs")> | null = null;
 function getAlertify() {
   if (!alertifyPromise) {
     alertifyPromise = import("alertifyjs").then(m => m.default ?? m);

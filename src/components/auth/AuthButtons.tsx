@@ -23,7 +23,14 @@ export function OAuthButtons() {
         redirectUrl: "/sso-callback",
         redirectUrlComplete: "/",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
+      const msg =
+        e?.errors?.[0]?.longMessage ||
+        e?.errors?.[0]?.message ||
+        e?.message ||
+        "Could not start social login.";
+      (await getAlertify()).error(msg);
       (await getAlertify()).error("Could not start social login.");
     } finally {
       setLoading(null);

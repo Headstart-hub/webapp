@@ -1,5 +1,5 @@
 import { createTheme } from "@mui/material/styles";
-import { transform } from "next/dist/build/swc/generated-native";
+import { TextFieldProps } from "@mui/material/TextField";
 
 const theme = createTheme({
   palette: {
@@ -58,7 +58,7 @@ const theme = createTheme({
         variant: "outlined",
         fullWidth: true,
         slotProps: { inputLabel: { shrink: true } },
-      } as any,
+      } as TextFieldProps,
     },
 
     MuiInputLabel: {

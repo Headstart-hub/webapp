@@ -10,6 +10,7 @@ import { Filter, Grid3X3, List, Rocket, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { NewProjectModal } from "./NewProjectModal";
 
 export default function ProjectsPage() {
@@ -22,11 +23,26 @@ export default function ProjectsPage() {
   }>({ view: "grid", status: "all" });
 
   const projects = useQuery(api.projects.listMy);
+  type ProjectListItem = {
+    _id: Id<"projects">;
+    name: string;
+    description?: string | null;
+    status: string;
+    updatedAt: number;
+    teamMemberCount?: number;
+    owner: {
+      _id: Id<"users">;
+      firstName: string | null | undefined;
+      lastName: string | null | undefined;
+      imageUrl: string | null | undefined;
+    } | null;
+  };
+
   const filtered = useMemo(() => {
     if (!projects) return projects;
     if (filter.status === "all") return projects;
     return projects.filter(
-      (p: any) => (p.status || "").toLowerCase() === filter.status
+      (p: ProjectListItem) => (p.status || "").toLowerCase() === filter.status
     );
   }, [projects, filter]);
 
@@ -144,7 +160,7 @@ export default function ProjectsPage() {
                 : "mt-6 space-y-3"
             }
           >
-            {filtered!.map((p: any) => (
+            {filtered!.map((p: ProjectListItem) => (
               <Link key={p._id} href={`/projects/${p._id}`} className="block">
                 <Card className="rounded-xl hover:shadow-md transition-shadow">
                   <CardContent className="p-4">

@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { useForm } from "react-hook-form";
 
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onCreated?: (projectId: string) => void;
+  onCreated?: (projectId: Id<"projects">) => void;
 }
 
 export function NewProjectModal({
@@ -39,11 +40,14 @@ export function NewProjectModal({
         name: values.name.trim(),
         description: values.description?.trim() || undefined,
       });
-      onCreated?.(projectId as unknown as string);
+      onCreated?.(projectId);
       reset();
       onClose();
-    } catch (err: any) {
-      setError(err?.message || "Failed to create project");
+    } catch (err: unknown) {
+      const message = typeof err === "object" && err && "message" in err
+        ? String((err as { message?: unknown }).message || "Failed to create project")
+        : "Failed to create project";
+      setError(message);
     }
   }
 

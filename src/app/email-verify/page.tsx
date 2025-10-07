@@ -47,12 +47,13 @@ export default function EmailVerifyPage() {
           "We’re still waiting for your email verification. Please click the link we sent."
         );
         router.replace("/");
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
         console.error("Email verification error:", err);
         (await getAlertify()).error(
-          err?.errors?.[0]?.longMessage ||
-            err?.errors?.[0]?.message ||
-            err?.message ||
+          e?.errors?.[0]?.longMessage ||
+            e?.errors?.[0]?.message ||
+            e?.message ||
             "Verification failed."
         );
         router.replace("/");

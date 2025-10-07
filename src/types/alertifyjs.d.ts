@@ -1,4 +1,5 @@
+import { Alertify } from "alertifyjs";
 declare module "alertifyjs" {
-  const alertify: any;
+  const alertify: Alertify;
   export default alertify;
 }

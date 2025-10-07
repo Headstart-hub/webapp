@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 interface InviteUserModalProps {
   open: boolean;
   onClose: () => void;
-  projectId: string;
+  projectId: Id<"projects">;
   onInvited?: (result: {
     candidateId: string;
     inviteLink?: string;
@@ -33,10 +34,10 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
     try {
       const inviteUrlBase = typeof window !== "undefined" ? `${window.location.origin}/invite` : "";
       const res = await createInvite({
-        projectId: projectId as any,
+        projectId,
         email,
         expiresInDays,
-      } as any);
+      });
       onInvited?.({
         candidateId: String(res?.candidateId ?? ""),
         inviteToken: String(res?.inviteToken ?? ""),
@@ -45,8 +46,11 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
       setEmail("");
       setExpiresInDays(7);
       onClose();
-    } catch (err: any) {
-      setError(err?.message || "Failed to send invite");
+    } catch (err: unknown) {
+      const message = typeof err === "object" && err && "message" in err
+        ? String((err as { message?: unknown }).message || "Failed to send invite")
+        : "Failed to send invite";
+      setError(message);
     }
   }
 

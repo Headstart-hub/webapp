@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import { AppShell } from "@/components/app-shell";
 import { ProtectedGuard } from "@/components/AuthGuard";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,11 +12,45 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { InviteUserModal } from "../InviteUserModal";
 
+type ProjectOwnerLite = {
+  _id: Id<"users">;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string | null;
+} | null;
+
+type ProjectDetail = {
+  _id: Id<"projects">;
+  name: string;
+  description?: string | null;
+  status: string;
+  teamMemberCount: number;
+  createdAt: number;
+  updatedAt: number;
+  owner: ProjectOwnerLite;
+} | null;
+
+type CandidateWithUser = {
+  _id: Id<"projectCandidates">;
+  source?: string;
+  invitationStatus?: "pending" | "accepted" | "declined";
+  user: (
+    | {
+        _id: Id<"users">;
+        firstName: string | null;
+        lastName: string | null;
+        imageUrl: string | null;
+        email: string | null;
+      }
+    | null
+  );
+};
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
-  const projectId = params?.id as any; 
+  const projectId = (params?.id as string | undefined) as Id<"projects"> | undefined;
 
-  const project = useQuery(api.projects.getById, projectId ? { projectId } : "skip");
+  const project = useQuery(api.projects.getById, projectId ? { projectId } : "skip") as ProjectDetail;
   const candidates = useQuery(
     api.projectCandidates.listByProjectWithUsers,
     projectId ? { projectId } : "skip"
@@ -84,8 +119,8 @@ export default function ProjectDetailPage() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-base font-semibold">Invited users</div>
-                  <div className="text-xs text-black/60">
-                    {Array.isArray(candidates) ? candidates.filter((c: any) => c.source !== "application").length : 0}
+                      <div className="text-xs text-black/60">
+                    {Array.isArray(candidates) ? candidates.filter((c) => (c as CandidateWithUser).source !== "application").length : 0}
                   </div>
                 </div>
                 {!candidates ? (
@@ -93,42 +128,44 @@ export default function ProjectDetailPage() {
                 ) : (
                   <div className="space-y-3">
                     {candidates
-                      .filter((c: any) => c.source !== "application")
-                      .map((c: any) => (
+                      .filter((c) => (c as CandidateWithUser).source !== "application")
+                      .map((c) => {
+                        const cand = c as CandidateWithUser
+                        return (
                         <div key={String(c._id)} className="flex items-center justify-between">
                           <div className="flex items-center gap-3 min-w-0">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={c.user?.imageUrl ?? undefined} alt="" />
+                              <AvatarImage src={cand.user?.imageUrl ?? undefined} alt="" />
                               <AvatarFallback>
-                                {String(c.user?.firstName ?? "").slice(0, 2)}
+                                {String(cand.user?.firstName ?? "").slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
                               <div className="text-sm font-medium truncate">
-                                {c.user ? `${c.user.firstName} ${c.user.lastName}` : "Unknown user"}
+                                {cand.user ? `${cand.user.firstName} ${cand.user.lastName}` : "Unknown user"}
                               </div>
                               <div className="text-xs text-black/60 truncate">
-                                {c.user?.email ?? "No email"}
+                                {cand.user?.email ?? "No email"}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {c.invitationStatus ? (
+                            {cand.invitationStatus ? (
                               <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs border">
-                                {c.invitationStatus}
+                                {cand.invitationStatus}
                               </span>
                             ) : null}
                           </div>
                         </div>
-                      ))}
-                    {candidates.filter((c: any) => c.source !== "application").length === 0 ? (
+                      )})}
+                    {candidates.filter((c) => (c as CandidateWithUser).source !== "application").length === 0 ? (
                       <div className="text-sm text-gray-500">No invites yet.</div>
                     ) : null}
                   </div>
                 )}
               </CardContent>
             </Card>
-            {showInviteModal ? (
+            {showInviteModal && projectId ? (
               <InviteUserModal
                 open={showInviteModal}
                 onClose={() => setShowInviteModal(false)}
