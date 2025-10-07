@@ -85,7 +85,7 @@ export function BasicDetailsStep({
         <h2 className="text-2xl font-bold mb-2" style={{ color: COLORS.fg }}>
           Basic Details
         </h2>
-        <p className="text-black/60">Let's start with the essentials</p>
+        <p className="text-black/60">Let&apos;s start with the essentials</p>
       </div>
 
       {/* Profile Picture */}
