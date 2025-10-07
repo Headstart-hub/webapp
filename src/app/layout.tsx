@@ -1,8 +1,7 @@
 "use client";
 import type { Metadata } from "next";
-import { Mulish } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { usePathname } from "next/navigation";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Authenticated, Unauthenticated } from "convex/react";
 import ConvexClientProvider from "./ConvexClientProvider";
@@ -10,43 +9,39 @@ import Navbar from "@/components/ui/Navbar";
 import UserSync from "@/components/UserSync";
 import { PublicGuard, ProtectedGuard } from "@/components/AuthGuard";
 import LandingPage from "@/components/LandingPage";
-import AppThemeProvider from "@/components/AppThemeProvider";
 
-const mulish = Mulish({
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-mulish",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isPublicChildRoute = pathname === "/sso-callback" || pathname === "/oauth-complete";
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <ClerkProvider>
       <ConvexClientProvider>
-        <html lang="en" suppressHydrationWarning>
-          <body className={`${mulish.variable} font-sans antialiased`}>
-            <AppThemeProvider>
-              <UserSync />
-              <Navbar />
-
-              {/* If signed in, render protected app */}
-              <Authenticated>
-                <ProtectedGuard>{children}</ProtectedGuard>
-              </Authenticated>
-
-              {/* If signed out, allow public child routes to render their pages */}
-              <Unauthenticated>
-                {isPublicChildRoute ? (
-                  children   // <-- let /sso-callback mount
-                ) : (
-                  <PublicGuard>
-                    <LandingPage />
-                  </PublicGuard>
-                )}
-              </Unauthenticated>
-            </AppThemeProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <UserSync />
+            <Navbar />
+            <Authenticated>
+              <ProtectedGuard>{children}</ProtectedGuard>
+            </Authenticated>
+            <Unauthenticated>
+              <PublicGuard>
+                <LandingPage />
+              </PublicGuard>
+            </Unauthenticated>
           </body>
         </html>
       </ConvexClientProvider>

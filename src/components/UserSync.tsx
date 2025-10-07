@@ -13,8 +13,7 @@ export default function UserSync() {
     if (isLoaded && user) {
       // Sync user data with Convex
       upsertUser({
-        firstName: user.firstName || "Unknown",
-        lastName: user.lastName || "User",
+        name: user.fullName || user.firstName || "Unknown",
         email: user.primaryEmailAddress?.emailAddress || "",
         imageUrl: user.imageUrl,
         clerkId: user.id,
