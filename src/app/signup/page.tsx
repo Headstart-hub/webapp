@@ -111,7 +111,7 @@ function SignupContent() {
             Complete Your Profile
           </h1>
           <p className="text-lg text-black/60">
-            Let's get to know you better to personalize your experience
+            Let&apos;s get to know you better to personalize your experience
           </p>
         </div>
 

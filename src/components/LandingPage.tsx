@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import * as SignIn from "@clerk/elements/sign-in";
 import * as SignUp from "@clerk/elements/sign-up";
-import * as Clerk from '@clerk/elements/common';
 import * as Common from "@clerk/elements/common";
 
 import Logo from "@/components/ui/logo";
@@ -56,7 +55,7 @@ export default function LandingPage() {
                   </SignIn.Root>
 
                   <p className="mt-14 text-center text-custom-fg text-base font-medium">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <button
                       type="button"
                       onClick={() => setPage("signUp")}
