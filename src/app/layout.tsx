@@ -18,9 +18,14 @@ const mulish = Mulish({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
-  const isPublicChildRoute = pathname === "/sso-callback" || pathname === "/oauth-complete";
+  const isPublicChildRoute =
+    pathname === "/sso-callback" || pathname === "/oauth-complete";
 
   return (
     <ClerkProvider>
@@ -39,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {/* If signed out, allow public child routes to render their pages */}
               <Unauthenticated>
                 {isPublicChildRoute ? (
-                  children   // <-- let /sso-callback mount
+                  children // <-- let /sso-callback mount
                 ) : (
                   <PublicGuard>
                     <LandingPage />

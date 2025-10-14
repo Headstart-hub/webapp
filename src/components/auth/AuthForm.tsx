@@ -4,9 +4,17 @@ import * as React from "react";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import PrimaryInput from "@/components/ui/primaryinput";
 import PrimaryButton from "@/components/ui/primarybutton";
-import { getAlertify } from "@/lib/alertifyClient";
 import { OAuthButtons } from "./AuthButtons";
 import { FLAGS } from "@/config/featureFlags";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 type Mode = "signIn" | "signUp" | "forgotPassword";
 
@@ -28,6 +36,9 @@ export default function AuthForm({
   }, []);
 
   const [submitting, setSubmitting] = React.useState(false);
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertTitle, setAlertTitle] = React.useState<string>("");
+  const [alertDescription, setAlertDescription] = React.useState<string>("");
 
   // shared fields
   const [email, setEmail] = React.useState("");
@@ -40,10 +51,18 @@ export default function AuthForm({
   const [awaitingEmailLink, setAwaitingEmailLink] = React.useState(false);
 
   // Clerk hooks
-  const { isLoaded: signInLoaded, signIn, setActive: setActiveIn } = useSignIn();
-  const { isLoaded: signUpLoaded, signUp, setActive: setActiveUp } = useSignUp();
+  const {
+    isLoaded: signInLoaded,
+    signIn,
+    setActive: setActiveIn,
+  } = useSignIn();
+  const {
+    isLoaded: signUpLoaded,
+    signUp,
+    setActive: setActiveUp,
+  } = useSignUp();
 
-  // Sign in  
+  // Sign in
   async function handleSignIn() {
     if (!signInLoaded) return;
     if (mounted.current) setSubmitting(true);
@@ -51,19 +70,32 @@ export default function AuthForm({
       const res = await signIn.create({ identifier: email, password });
       if (res.status === "complete") {
         await setActiveIn({ session: res.createdSessionId });
-        (await getAlertify()).success("Signed in!");
+        setAlertTitle("Signed in");
+        setAlertDescription("You have successfully signed in.");
+        setAlertOpen(true);
         onSuccess?.();
       } else {
-        (await getAlertify()).message("Further verification required.");
+        setAlertTitle("Further verification required");
+        setAlertDescription(
+          "Please complete the additional verification steps."
+        );
+        setAlertOpen(true);
       }
     } catch (err: unknown) {
-      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
+      const e = err as
+        | {
+            errors?: Array<{ longMessage?: string; message?: string }>;
+            message?: string;
+          }
+        | undefined;
       const msg =
         e?.errors?.[0]?.longMessage ||
         e?.errors?.[0]?.message ||
         e?.message ||
         "Invalid username or password.";
-      (await getAlertify()).error(msg);
+      setAlertTitle("Sign in failed");
+      setAlertDescription(msg);
+      setAlertOpen(true);
     } finally {
       if (mounted.current) setSubmitting(false);
     }
@@ -74,11 +106,15 @@ export default function AuthForm({
     if (!signUpLoaded) return;
 
     if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-      (await getAlertify()).error("Please fill in all fields.");
+      setAlertTitle("Missing information");
+      setAlertDescription("Please fill in all fields.");
+      setAlertOpen(true);
       return;
     }
     if (password !== confirmPassword) {
-      (await getAlertify()).error("Passwords do not match.");
+      setAlertTitle("Passwords do not match");
+      setAlertDescription("Please make sure both passwords match.");
+      setAlertOpen(true);
       return;
     }
 
@@ -91,39 +127,53 @@ export default function AuthForm({
       if (!FLAGS.EMAIL_VERIFICATION_ENABLED) {
         if (res.status === "complete" && res.createdSessionId) {
           await setActiveUp({ session: res.createdSessionId });
-          (await getAlertify()).success("Account created.");
+          setAlertTitle("Account created");
+          setAlertDescription("Your account has been created successfully.");
+          setAlertOpen(true);
           onSuccess?.();
           return;
         }
 
-        (await getAlertify()).message(
-          "Verification is disabled in UI, but your instance may still require it."
+        setAlertTitle("Verification disabled in UI");
+        setAlertDescription(
+          "Your backend may still require email verification."
         );
+        setAlertOpen(true);
         return;
       }
 
       // 2) PROD (flag ON): send EMAIL LINK
       if (FLAGS.EMAIL_VERIFICATION_ENABLED) {
-        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const origin =
+          typeof window !== "undefined" ? window.location.origin : "";
         await signUp.prepareEmailAddressVerification({
-            strategy: "email_link",
-            redirectUrl: `${origin}/email-verify`,
+          strategy: "email_link",
+          redirectUrl: `${origin}/email-verify`,
         });
         if (mounted.current) {
-            setAwaitingEmailLink(true);
-            (await getAlertify()).message(
-            "We emailed you a verification link. Click it, then come back here."
-            );
+          setAwaitingEmailLink(true);
+          setAlertTitle("Check your email");
+          setAlertDescription(
+            "We sent a verification link. Click it, then return here."
+          );
+          setAlertOpen(true);
         }
       }
     } catch (err: unknown) {
-      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
+      const e = err as
+        | {
+            errors?: Array<{ longMessage?: string; message?: string }>;
+            message?: string;
+          }
+        | undefined;
       const msg =
         e?.errors?.[0]?.longMessage ||
         e?.errors?.[0]?.message ||
         e?.message ||
         "Could not create your account.";
-      (await getAlertify()).error(msg);
+      setAlertTitle("Sign up failed");
+      setAlertDescription(msg);
+      setAlertOpen(true);
     } finally {
       if (mounted.current) setSubmitting(false);
     }
@@ -137,21 +187,32 @@ export default function AuthForm({
       const refreshed = await signUp.reload();
       if (refreshed.status === "complete") {
         await setActiveUp({ session: refreshed.createdSessionId });
-        (await getAlertify()).success("Account created!");
+        setAlertTitle("Account created");
+        setAlertDescription(
+          "Your email has been verified and account created."
+        );
+        setAlertOpen(true);
         onSuccess?.();
       } else {
-        (await getAlertify()).message(
-          "Still waiting for verification. Check your inbox/spam and try again."
-        );
+        setAlertTitle("Still waiting for verification");
+        setAlertDescription("Check your inbox or spam folder and try again.");
+        setAlertOpen(true);
       }
     } catch (err: unknown) {
-      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
+      const e = err as
+        | {
+            errors?: Array<{ longMessage?: string; message?: string }>;
+            message?: string;
+          }
+        | undefined;
       const msg =
         e?.errors?.[0]?.longMessage ||
         e?.errors?.[0]?.message ||
         e?.message ||
         "We couldn't confirm your email yet.";
-      (await getAlertify()).error(msg);
+      setAlertTitle("Verification check failed");
+      setAlertDescription(msg);
+      setAlertOpen(true);
     } finally {
       if (mounted.current) setSubmitting(false);
     }
@@ -162,20 +223,32 @@ export default function AuthForm({
     if (!signUpLoaded) return;
     if (mounted.current) setSubmitting(true);
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "";
       await signUp.prepareEmailAddressVerification({
         strategy: "email_link",
         redirectUrl: `${origin}/email-verify`,
       });
-      (await getAlertify()).success("Verification link re-sent.");
+      setAlertTitle("Verification link sent");
+      setAlertDescription(
+        "We have re-sent the verification link to your email."
+      );
+      setAlertOpen(true);
     } catch (err: unknown) {
-      const e = err as { errors?: Array<{ longMessage?: string; message?: string }>; message?: string } | undefined
+      const e = err as
+        | {
+            errors?: Array<{ longMessage?: string; message?: string }>;
+            message?: string;
+          }
+        | undefined;
       const msg =
         e?.errors?.[0]?.longMessage ||
         e?.errors?.[0]?.message ||
         e?.message ||
         "Unable to resend the link.";
-      (await getAlertify()).error(msg);
+      setAlertTitle("Resend failed");
+      setAlertDescription(msg);
+      setAlertOpen(true);
     } finally {
       if (mounted.current) setSubmitting(false);
     }
@@ -199,8 +272,7 @@ export default function AuthForm({
   return (
     <form onSubmit={onSubmit} className="w-full flex flex-col gap-6">
       {FLAGS.EMAIL_VERIFICATION_ENABLED && awaitingEmailLink ? (
-        <>
-        </>
+        <></>
       ) : (
         <>
           <PrimaryInput
@@ -210,88 +282,101 @@ export default function AuthForm({
             value={email}
             onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
           />
-          
+
           {!isForgotPassword && (
             <div className="flex flex-col lg:flex-row gap-6">
+              <PrimaryInput
+                type="password"
+                label="Password"
+                placeholder={
+                  isSignIn ? "Enter password" : "Create a strong password"
+                }
+                value={password}
+                onChange={(e) =>
+                  setPassword((e.target as HTMLInputElement).value)
+                }
+              />
+              {isSignUp && (
                 <PrimaryInput
-                    type="password"
-                    label="Password"
-                    placeholder={isSignIn ? "Enter password" : "Create a strong password"}
-                    value={password}
-                    onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+                  type="password"
+                  label="Confirm Password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword((e.target as HTMLInputElement).value)
+                  }
                 />
-                {isSignUp && (
-                    <PrimaryInput
-                        type="password"
-                        label="Confirm Password"
-                        placeholder="Confirm Password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword((e.target as HTMLInputElement).value)}
-                    />
-                )}
+              )}
             </div>
           )}
 
           {isSignIn && (
             <div className="flex items-end justify-end">
-                <button
-                    type="button"
-                    onClick={() => setPage("forgotPassword")}
-                    className="text-custom-fg font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
-                >
-                    Forgot Password?
-                </button>
+              <button
+                type="button"
+                onClick={() => setPage("forgotPassword")}
+                className="text-custom-fg font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+              >
+                Forgot Password?
+              </button>
             </div>
           )}
 
           {isSignUp && (
             <div className="flex items-end justify-start">
-                <p className="font-medium text-base color-custom-fg">
-                    By signing up, you agree to the{" "}
-                    <button
-                      type="button"
-                    //   onClick={() => setPage("signUp")}
-                      className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
-                    >
-                      Terms of Service
-                    </button>
-                    {" "}and{" "}
-                    <button
-                      type="button"
-                    //   onClick={() => setPage("signUp")}
-                      className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
-                    >
-                      Privacy Policy
-                    </button>
-                    .
-                </p>
+              <p className="font-medium text-base color-custom-fg">
+                By signing up, you agree to the{" "}
+                <button
+                  type="button"
+                  //   onClick={() => setPage("signUp")}
+                  className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+                >
+                  Terms of Service
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  //   onClick={() => setPage("signUp")}
+                  className="text-custom-primary font-extrabold hover:underline focus:outline-none focus:ring-2 focus:ring-custom-primary cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+                .
+              </p>
             </div>
           )}
 
-            <div className="w-full flex items-center justify-center">
-                <PrimaryButton type="submit" loading={submitting}>
-                  {submitting
-                    ? isSignIn
-                    ? "Signing in…"
-                    : "Creating…"
-                    : isSignIn
-                    ? "Sign In"
-                    : "Create account"}
-                </PrimaryButton>
-            </div>
+          <div className="w-full flex items-center justify-center">
+            <PrimaryButton type="submit" loading={submitting}>
+              {submitting
+                ? isSignIn
+                  ? "Signing in…"
+                  : "Creating…"
+                : isSignIn
+                  ? "Sign In"
+                  : "Create account"}
+            </PrimaryButton>
+          </div>
 
           {!isForgotPassword && (
             <div className="w-full">
-                <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
-                    <div className="border-1 border-custom-fg w-full"></div>
-                        <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
-                    <div className="border-1 border-custom-fg w-full"></div>
-                </div>
-                <OAuthButtons />
-                <div className="mt-6" id="clerk-captcha" data-cl-theme="dark" data-cl-size="flexible" data-cl-language="en-EN" />
+              <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
+                <div className="border-1 border-custom-fg w-full"></div>
+                <p className="w-full text-center text-custom-fg text-base font-medium">
+                  or continue with
+                </p>
+                <div className="border-1 border-custom-fg w-full"></div>
+              </div>
+              <OAuthButtons />
+              <div
+                className="mt-6"
+                id="clerk-captcha"
+                data-cl-theme="dark"
+                data-cl-size="flexible"
+                data-cl-language="en-EN"
+              />
             </div>
           )}
-
         </>
       )}
       {/* Sign-in / Sign-up / Forgot Password shared */}
@@ -403,7 +488,19 @@ export default function AuthForm({
           slotProps={{ input: { inputProps: { inputMode: "numeric", pattern: "[0-9]*" } } }}
         />
       )} */}
-
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alertTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setAlertOpen(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

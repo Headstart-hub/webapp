@@ -9,11 +9,12 @@ import * as Common from "@clerk/elements/common";
 import Logo from "@/components/ui/logo";
 import PrimaryButton from "./ui/primarybutton";
 
-import "alertifyjs/build/css/alertify.min.css";
 import AuthForm from "./auth/AuthForm";
 
 export default function LandingPage() {
-  const [page, setPage] = useState<"signIn" | "signUp" | "forgotPassword">("signIn");
+  const [page, setPage] = useState<"signIn" | "signUp" | "forgotPassword">(
+    "signIn"
+  );
 
   return (
     <div className="min-h-screen">
@@ -21,20 +22,23 @@ export default function LandingPage() {
         {/* ============== INPUT AREA ============== */}
         <div className="flex-1 w-full">
           <div className="flex h-13">
-            <Logo variant={ "full" } />
+            <Logo variant={"full"} />
           </div>
           <div className="md:flex md:justify-center">
             <div className="mt-14 md:w-3/5 lg:w-4/5">
-
               {/* ============== SIGN IN ============== */}
               {page === "signIn" && (
                 <>
-                  <h1 className="text-custom-fg text-3xl font-black">Welcome back!</h1>
-                  <span className="text-custom-fg text-base font-medium">Sign in to your Headstart account.</span>
+                  <h1 className="text-custom-fg text-3xl font-black">
+                    Welcome back!
+                  </h1>
+                  <span className="text-custom-fg text-base font-medium">
+                    Sign in to your Headstart account.
+                  </span>
                   <SignIn.Root>
                     <SignIn.Step name="start" asChild>
                       <div className="mt-14 flex flex-col justify-center items-center">
-                        <AuthForm mode="signIn" setPage={ setPage } />
+                        <AuthForm mode="signIn" setPage={setPage} />
                         {/* <div className="w-full mt-6">
                           <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
                             <div className="border-1 border-custom-fg w-full"></div>
@@ -67,22 +71,25 @@ export default function LandingPage() {
                 </>
               )}
 
-
               {/* ============== SIGN UP ============== */}
               {page === "signUp" && (
                 <>
                   <div className="flex gap-2">
-                    <h1 className="text-custom-fg text-3xl font-black">Welcome to</h1>
+                    <h1 className="text-custom-fg text-3xl font-black">
+                      Welcome to
+                    </h1>
                     <div className="flex h-10">
-                      <Logo variant={ "wordmark" } />
+                      <Logo variant={"wordmark"} />
                     </div>
                   </div>
-                  <span className="text-custom-fg text-base font-medium">We are pleased to have you join us.</span>
-                    <SignUp.Root>
-                      <SignUp.Step name="start" asChild>
-                        <div className="mt-14 flex flex-col justify-center items-center">
-                          <AuthForm mode="signUp" setPage={ setPage } />
-                          {/* <div className="w-full mt-6">
+                  <span className="text-custom-fg text-base font-medium">
+                    We are pleased to have you join us.
+                  </span>
+                  <SignUp.Root>
+                    <SignUp.Step name="start" asChild>
+                      <div className="mt-14 flex flex-col justify-center items-center">
+                        <AuthForm mode="signUp" setPage={setPage} />
+                        {/* <div className="w-full mt-6">
                             <div className="flex flex-1 flex-row gap-6 w-full items-center justify-center">
                               <div className="border-1 border-custom-fg w-full"></div>
                               <p className="w-full text-center text-custom-fg text-base font-medium">or continue with</p>
@@ -97,9 +104,9 @@ export default function LandingPage() {
                               </Common.Connection>
                             </div>
                           </div> */}
-                        </div>
-                      </SignUp.Step>
-                    </SignUp.Root>
+                      </div>
+                    </SignUp.Step>
+                  </SignUp.Root>
                   <p className="mt-14 text-center text-custom-fg text-base font-medium">
                     Already have an account?{" "}
                     <button
@@ -113,15 +120,16 @@ export default function LandingPage() {
                 </>
               )}
 
-
               {/* ============== FORGOT PASSWORD ============== */}
               {page === "forgotPassword" && (
                 <>
-                  <h1 className="text-custom-fg text-3xl font-black">Forgot your password?</h1>
-                  <span className="text-custom-fg text-base font-medium">Enter your email and we can help you recover your account.</span>
-                  <div className="mt-14 flex flex-col justify-center items-center">
-                    
-                  </div>
+                  <h1 className="text-custom-fg text-3xl font-black">
+                    Forgot your password?
+                  </h1>
+                  <span className="text-custom-fg text-base font-medium">
+                    Enter your email and we can help you recover your account.
+                  </span>
+                  <div className="mt-14 flex flex-col justify-center items-center"></div>
                   <p className="text-center text-custom-fg text-base font-medium">
                     Remembered your password?{" "}
                     <button
@@ -139,34 +147,62 @@ export default function LandingPage() {
         </div>
 
         {/* ============== CAROUSEL ============== */}
-        <div className="flex-1 md:w-3/5 lg:w-full">
-          carousel
-        </div>
+        <div className="flex-1 md:w-3/5 lg:w-full">carousel</div>
       </div>
 
       {/* ============== FOOTER ============== */}
       <div className="flex flex-col-reverse lg:flex-row p-6 gap-4 bg-custom-nav font-medium justify-center text-center">
-        <span className="text-white text-base">Headstart &copy; {new Date().getFullYear()}</span>
+        <span className="text-white text-base">
+          Headstart &copy; {new Date().getFullYear()}
+        </span>
         <div className="flex flex-wrap space-x-4 space-y-2 lg:space-y-0 justify-center [&>a]:whitespace-nowrap">
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to about page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to about page"
+          >
             About
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to accessibility page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to accessibility page"
+          >
             Accessibility
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to cookie policy page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to cookie policy page"
+          >
             Cookie Policy
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to copyright policy page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to copyright policy page"
+          >
             Copyright Policy
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to privacy policy page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to privacy policy page"
+          >
             Privacy Policy
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to terms of service page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to terms of service page"
+          >
             Terms of Service
           </a>
-          <a href="#" className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent" aria-label="Go to help centre page">
+          <a
+            href="#"
+            className="text-white text-base hover:underline hover:text-custom-accent focus:outline-none focus:ring-2 focus:ring-custom-accent"
+            aria-label="Go to help centre page"
+          >
             Help Centre
           </a>
         </div>
