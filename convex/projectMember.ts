@@ -138,3 +138,54 @@ export const listMembersByProject = query({
   },
 });
 
+// List members for a project with basic user details (for avatars)
+export const listByProjectWithUsers = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("projectMembers")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    const usersMap = new Map<string, any>();
+    const result: Array<any> = [];
+
+    for (const m of members) {
+      let user = usersMap.get(m.userId as unknown as string);
+      if (!user) {
+        user = await ctx.db.get(m.userId);
+        if (user) usersMap.set(m.userId as unknown as string, user);
+      }
+      result.push({
+        ...m,
+        user: user
+          ? {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              imageUrl: user.imageUrl,
+            }
+          : null,
+      });
+    }
+
+    return result;
+  },
+});
+
+// Count active memberships for a user (excludes status === "left")
+export const countActiveByUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const all = await ctx.db
+      .query("projectMembers")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    let count = 0;
+    for (const m of all) {
+      if (m.status !== "left") count++;
+    }
+    return count;
+  },
+});
+

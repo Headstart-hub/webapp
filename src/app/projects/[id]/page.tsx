@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { InviteUserModal } from "../InviteUserModal";
+import { ArrowLeft } from "lucide-react";
 
 type ProjectOwnerLite = {
   _id: Id<"users">;
@@ -46,8 +47,22 @@ type CandidateWithUser = {
   );
 };
 
+type MemberWithUser = {
+  _id: Id<"projectMembers">;
+  user: (
+    | {
+        _id: Id<"users">;
+        firstName: string | null;
+        lastName: string | null;
+        imageUrl: string | null;
+      }
+    | null
+  );
+};
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const projectId = (params?.id as string | undefined) as Id<"projects"> | undefined;
 
   const project = useQuery(api.projects.getById, projectId ? { projectId } : "skip") as ProjectDetail;
@@ -55,6 +70,10 @@ export default function ProjectDetailPage() {
     api.projectCandidates.listByProjectWithUsers,
     projectId ? { projectId } : "skip"
   );
+  const members = useQuery(
+    api.projectMember.listByProjectWithUsers,
+    projectId ? { projectId } : "skip"
+  ) as Array<MemberWithUser> | undefined;
   const [showInviteModal, setShowInviteModal] = useState(false);
   async function onInviteClick() {
     setShowInviteModal(true);
@@ -80,29 +99,28 @@ export default function ProjectDetailPage() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
+                    <div className="mb-2">
+                      <Button variant="ghost" size="sm" className="px-2" onClick={() => router.back()}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back
+                      </Button>
+                    </div>
                     <div className="text-xl font-semibold">{project.name}</div>
                     {project.description ? (
                       <div className="text-sm text-black/60 mt-1">{project.description}</div>
                     ) : null}
-                    <div className="mt-3 flex items-center gap-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={project.owner?.imageUrl ?? undefined} alt="" />
-                          <AvatarFallback>
-                            {String(project.owner?.firstName ?? "").slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-black/70">
-                          {project.owner
-                            ? `${String(project.owner.firstName)} ${String(project.owner.lastName)}`
-                            : "Unknown"}
-                        </span>
+                    {members ? (
+                      <div className="mt-3 flex -space-x-2">
+                        {members.map((m) => (
+                          <Avatar key={String(m._id)} className="h-6 w-6 ring-2 ring-white">
+                            <AvatarImage src={m.user?.imageUrl ?? undefined} alt="" />
+                            <AvatarFallback>
+                              {String(m.user?.firstName ?? "").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
                       </div>
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs border">
-                        {project.status}
-                      </span>
-                      <span className="text-black/60">Updated {formattedDates?.updated}</span>
-                    </div>
+                    ) : null}
                     <div className="mt-2 text-xs text-black/60">
                       Created {formattedDates?.created}
                     </div>

@@ -21,7 +21,7 @@ export const createProject = mutation({
     }
 
     const now = Date.now();
-    return await ctx.db.insert("projects", {
+    const projectId = await ctx.db.insert("projects", {
       name: args.name,
       description: args.description,
       ownerId: owner._id,
@@ -30,6 +30,24 @@ export const createProject = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    //create a project member for the owner
+    await ctx.db.insert("projectMembers", {
+      projectId: projectId,
+      userId: owner._id,
+      authRole: "owner",
+      status: "active",
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      role: "owner",
+      memberTitle: undefined,
+      titleDescription: undefined,
+      grants: undefined,
+      revokes: undefined,
+    });
+
+    return projectId;
   },
 });
 
