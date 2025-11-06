@@ -1,9 +1,21 @@
+"use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Doc } from "../../convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export function ProfileCard({ user }: { user: Doc<"users"> }) {
   const primaryGradient = "linear-gradient(135deg,#6366f1 0%,#22d3ee 100%)";
+
+  const projectsCount =
+    useQuery(api.projectMember.countActiveByUser, { userId: user._id }) ?? 0;
+  const pendingInvites =
+    useQuery(api.projectCandidates.countPendingInvitesByUser, {
+      userId: user._id,
+    }) ?? 0;
+  const followers = 0; // TODO: implement followers table/query
+  const following = 0; // TODO: implement follows table/query
 
   return (
     <Card
@@ -37,9 +49,10 @@ export function ProfileCard({ user }: { user: Doc<"users"> }) {
         </div>
         <div className="mt-5 grid grid-cols-3 items-center text-center">
           {[
-            { label: "Projects", value: 1234 },
-            { label: "Followers", value: 1234 },
-            { label: "Following", value: 1234 },
+            { label: "Projects", value: projectsCount },
+            { label: "Followers", value: followers },
+            // { label: "Following", value: following },
+            { label: "Invites", value: pendingInvites },
           ].map((s) => (
             <div key={s.label}>
               <div
