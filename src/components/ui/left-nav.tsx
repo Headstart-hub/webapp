@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, Flame, Rocket, Users, MessageSquare } from "lucide-react";
+import { Home, Flame, Rocket, Users, MessageSquare, Mail } from "lucide-react";
 import { FC } from "react";
 import { View } from "@/types/navigation";
 import Link from "next/link";
@@ -41,6 +41,7 @@ export const LeftNav: FC<LeftNavProps> = ({ currentView }) => {
     },
     { label: "Communities", icon: Users, href: "#", active: false },
     { label: "Messages", icon: MessageSquare, href: "#", active: false },
+    { label: "Invites", icon: Mail, href: "/invites", active: currentView === "invites" || pathname.startsWith("/invites") },
   ];
 
   return (

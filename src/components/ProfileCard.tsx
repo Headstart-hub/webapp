@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Doc } from "../../convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import Link from "next/link";
 
 export function ProfileCard({ user }: { user: Doc<"users"> }) {
   const primaryGradient = "linear-gradient(135deg,#6366f1 0%,#22d3ee 100%)";
@@ -49,23 +50,32 @@ export function ProfileCard({ user }: { user: Doc<"users"> }) {
         </div>
         <div className="mt-5 grid grid-cols-3 items-center text-center">
           {[
-            { label: "Projects", value: projectsCount },
-            { label: "Followers", value: followers },
+            { label: "Projects", value: projectsCount, href: "/projects" },
+            { label: "Followers", value: followers, href: "/followers" },
             // { label: "Following", value: following },
-            { label: "Invites", value: pendingInvites },
-          ].map((s) => (
-            <div key={s.label}>
-              <div
-                className="text-base font-semibold"
-                style={{ color: "#111827" }}
-              >
-                {s.value}
-              </div>
-              <div className="text-[11px]" style={{ color: "#6366f1" }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
+            { label: "Invites", value: pendingInvites, href: "/invites" },
+          ].map((s) => {
+            const content = (
+              <>
+                <div
+                  className="text-base font-semibold"
+                  style={{ color: "#111827" }}
+                >
+                  {s.value}
+                </div>
+                <div className="text-[11px]" style={{ color: "#6366f1" }}>
+                  {s.label}
+                </div>
+              </>
+            )
+            return s.href ? (
+              <Link key={s.label} href={s.href} className="block hover:opacity-90">
+                {content}
+              </Link>
+            ) : (
+              <div key={s.label}>{content}</div>
+            )
+          })}
         </div>
       </CardContent>
     </Card>
