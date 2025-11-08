@@ -1,7 +1,8 @@
-import { mutation, action, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { mutation, action, internalAction, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
+import { sendInviteEmail } from "./utils/emails";
 import type { Id } from "./_generated/dataModel";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import {
   candidateCreateArgs,
   CandidateSource,
@@ -19,78 +20,7 @@ async function generateUniqueInviteToken(ctx: any): Promise<string> {
   throw new Error("Failed to generate unique invite token");
 }
 
-// Create a candidate entry: supports direct application, direct invite, and referral invite
-export const createCandidate = mutation({
-  args: candidateCreateArgs,
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const actor = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-    if (!actor) throw new Error("User not found");
-
-    // Prevent duplicate candidacy for the same project/user
-    const existing = await ctx.db
-      .query("projectCandidates")
-      .withIndex("by_project_user", (q) =>
-        q.eq("projectId", args.projectId).eq("userId", args.userId)
-      )
-      .first();
-    if (existing) return existing._id;
-
-    const now = Date.now();
-    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-
-    let candidateId: string;
-    if (args.source === "application") {
-      candidateId = await ctx.db.insert("projectCandidates", {
-        projectId: args.projectId,
-        userId: args.userId,
-        source: "application" as CandidateSource,
-        coverLetter: args.coverLetter,
-        appliedAt: now,
-        createdAt: now,
-        updatedAt: now,
-      } as any);
-    } else if (args.source === "direct_invite") {
-      candidateId = await ctx.db.insert("projectCandidates", {
-        projectId: args.projectId,
-        userId: args.userId,
-        source: "direct_invite" as CandidateSource,
-        invitedByUserId: actor._id,
-        inviteToken: await generateUniqueInviteToken(ctx),
-        inviteExpiresAt: now + sevenDaysMs,
-        invitationStatus: "pending",
-        coverLetter: args.coverLetter,
-        createdAt: now,
-        updatedAt: now,
-      } as any);
-    } else {
-      if (!args.referralByUserId) {
-        throw new Error("referralByUserId is required for referral_invite");
-      }
-      candidateId = await ctx.db.insert("projectCandidates", {
-        projectId: args.projectId,
-        userId: args.userId,
-        source: "referral_invite" as CandidateSource,
-        referralByUserId: args.referralByUserId,
-        invitedByUserId: actor._id,
-        inviteToken: await generateUniqueInviteToken(ctx),
-        inviteExpiresAt: now + sevenDaysMs,
-        invitationStatus: "pending",
-        coverLetter: args.coverLetter,
-        createdAt: now,
-        updatedAt: now,
-      } as any);
-    }
-    return candidateId;
-  },
-});
-
-// Create a direct invite candidate and return the invite token, can be new user or existing user
+// Create a direct invite candidate and return the invite token, can be new user or existing user, if user already in the project no need to invite
 export const createDirectInvite = mutation({
   args: {
     projectId: v.id("projects"),
@@ -104,7 +34,6 @@ export const createDirectInvite = mutation({
     candidateId: string;
     inviteToken: string;
     inviteExpiresAt: number;
-    userId: Id<"users">;
   }> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
@@ -116,24 +45,35 @@ export const createDirectInvite = mutation({
     if (!actor) throw new Error("User not found");
 
     const now = Date.now();
-
-    // Resolve user by email
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
-      .first();
-      
-    if (!user) {
-      throw new Error("Invitee email not found");
-    }
-    const userId = user._id;
     const expiresMs = (args.expiresInDays ?? 7) * 24 * 60 * 60 * 1000;
 
-    // Check for existing candidate
+    // Normalize email (email is the primary FK)
+    const normalizedEmail = args.email.toLowerCase().trim();
+    
+    // Check if user exists and is already a project member
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .first();
+    
+    if (existingUser) {
+      const existingMember = await ctx.db
+        .query("projectMembers")
+        .withIndex("by_project_user", (q) =>
+          q.eq("projectId", args.projectId).eq("userId", existingUser._id)
+        )
+        .first();
+      
+      if (existingMember) {
+        throw new ConvexError({ message: "User already in the project" });
+      }
+    }
+
+    // Check for existing candidate by email (primary FK)
     const existing = await ctx.db
       .query("projectCandidates")
-      .withIndex("by_project_user", (q) =>
-        q.eq("projectId", args.projectId).eq("userId", userId)
+      .withIndex("by_project_email", (q) =>
+        q.eq("projectId", args.projectId).eq("email", normalizedEmail)
       )
       .first();
 
@@ -150,13 +90,14 @@ export const createDirectInvite = mutation({
         candidateId: existing._id,
         inviteToken: existing.inviteToken as string,
         inviteExpiresAt: existing.inviteExpiresAt as number,
-        userId,
       };
     }
 
     const inviteToken = await generateUniqueInviteToken(ctx);
     let candidateId: string;
+    
     if (existing) {
+      // Update existing candidate
       await ctx.db.patch(existing._id, {
         source: "direct_invite" as CandidateSource,
         invitedByUserId: actor._id,
@@ -167,9 +108,10 @@ export const createDirectInvite = mutation({
       } as any);
       candidateId = existing._id;
     } else {
+      // Create new candidate with email as primary FK
       candidateId = await ctx.db.insert("projectCandidates", {
         projectId: args.projectId,
-        userId,
+        email: normalizedEmail, // Primary FK
         source: "direct_invite" as CandidateSource,
         invitedByUserId: actor._id,
         inviteToken,
@@ -179,8 +121,63 @@ export const createDirectInvite = mutation({
         updatedAt: now,
       } as any);
     }
+    
+    return { 
+      candidateId, 
+      inviteToken, 
+      inviteExpiresAt: now + expiresMs,  
+    };
+  },
+});
 
-    return { candidateId, inviteToken, inviteExpiresAt: now + expiresMs, userId };
+// Public action: create/refresh invite then send email via internal action
+export const sendDirectInvite = action({
+  args: {
+    projectId: v.id("projects"),
+    email: v.string(),
+    expiresInDays: v.optional(v.number()),
+    origin: v.string(),
+  },
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ candidateId: string; inviteToken: string; inviteExpiresAt: number }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // Create or reuse invite
+    const { candidateId, inviteToken, inviteExpiresAt } = await ctx.runMutation(
+      api.projectCandidates.createDirectInvite,
+      {
+        projectId: args.projectId,
+        email: args.email,
+        expiresInDays: args.expiresInDays,
+      }
+    ).catch((err) => {
+      // If it's already a ConvexError, re-throw it as-is to preserve the original message
+      if (err instanceof ConvexError) {
+        throw err;
+      }
+      // For other errors, wrap in ConvexError with the message
+      throw new ConvexError(err instanceof Error ? err.message : "Failed to create invite");
+    });
+
+    // Get inviter and project for email content
+    const inviter = await ctx.runQuery(api.users.getCurrentUser, {});
+    const project = await ctx.runQuery(api.projects.getById, { projectId: args.projectId });
+    const projectName = (project as any)?.name || "a project";
+    const inviterName = inviter ? `${(inviter as any).firstName ?? ''} ${(inviter as any).lastName ?? ''}`.trim() : undefined;
+    const inviteLink = `${args.origin}/invites`;
+
+    await sendInviteEmail({
+      to: args.email,
+      projectName,
+      inviterName,
+      inviteLink,
+      expiresAt: inviteExpiresAt,
+    });
+
+    return { candidateId, inviteToken, inviteExpiresAt };
   },
 });
 
@@ -211,10 +208,13 @@ export const listByProjectWithUsers = query({
     const result = [] as Array<any>;
 
     for (const c of visible) {
-      let user = usersMap.get(c.userId as string);
+      let user = usersMap.get(c.email as string);
       if (!user) {
-        user = await ctx.db.get(c.userId);
-        if (user) usersMap.set(c.userId as string, user);
+        user = await ctx.db
+          .query("users")
+          .withIndex("by_email", (q: any) => q.eq("email", c.email))
+          .first();
+        if (user) usersMap.set(c.email as string, user);
       }
       result.push({
         ...c,
@@ -235,24 +235,6 @@ export const listByProjectWithUsers = query({
 });
 
 
-// Count pending invites for a user (unexpired if inviteExpiresAt is set)
-export const countPendingInvitesByUser = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const rows = await ctx.db
-      .query("projectCandidates")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-    let count = 0;
-    for (const r of rows) {
-      const isPending = r.invitationStatus === "pending";
-      const notExpired = !r.inviteExpiresAt || r.inviteExpiresAt > now;
-      if (isPending && notExpired) count++;
-    }
-    return count;
-  },
-});
 
 // List current user's pending invites with basic project info
 export const listMyPendingInvites = query({
@@ -268,15 +250,20 @@ export const listMyPendingInvites = query({
     if (!me) return [];
 
     const now = Date.now();
+    const normalizedEmail = me.email.toLowerCase().trim();
+    
+    // Get invites by email (primary FK)
     const rows = await ctx.db
       .query("projectCandidates")
-      .withIndex("by_user", (q) => q.eq("userId", me._id))
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
       .collect();
 
     const pending = rows.filter((r) => {
       const isPending = r.invitationStatus === "pending";
       const notExpired = !r.inviteExpiresAt || r.inviteExpiresAt > now;
-      return isPending && notExpired;
+      // Must match email (primary FK)
+      const matches = r.email && r.email.toLowerCase().trim() === normalizedEmail;
+      return isPending && notExpired && matches;
     });
 
     const projectsCache = new Map<string, any>();
@@ -336,7 +323,14 @@ export const respondToInvite = mutation({
 
     const candidate = await ctx.db.get(args.candidateId);
     if (!candidate) throw new Error("Invite not found");
-    if (candidate.userId !== me._id) throw new Error("Forbidden");
+    
+    console.log("candidate", candidate);
+    // Check authorization: must match email (primary FK)
+    const normalizedEmail = me.email.toLowerCase().trim();
+    const isAuthorized = 
+      candidate.email && candidate.email.toLowerCase().trim() === normalizedEmail;
+    
+    if (!isAuthorized) throw new Error("Forbidden");
     if (candidate.invitationStatus !== "pending") return { ok: true };
 
     const now = Date.now();
@@ -348,19 +342,19 @@ export const respondToInvite = mutation({
       return { ok: true };
     }
 
-    // Accept: mark accepted and ensure membership exists
+    // Accept: mark accepted, cache userId for performance, and ensure membership exists
+    const finalUserId = me._id;
+    
     await ctx.db.patch(candidate._id, {
       invitationStatus: "accepted",
       appliedAt: now,
       updatedAt: now,
     } as any);
 
-    
-
     const existingMember = await ctx.db
       .query("projectMembers")
       .withIndex("by_project_user", (q) =>
-        q.eq("projectId", candidate.projectId).eq("userId", candidate.userId)
+        q.eq("projectId", candidate.projectId).eq("userId", finalUserId)
       )
       .first();
     if (existingMember) return { ok: true };
@@ -368,7 +362,7 @@ export const respondToInvite = mutation({
     // Create membership (active) and initialize history
     const memberId = await ctx.db.insert("projectMembers", {
       projectId: candidate.projectId,
-      userId: candidate.userId,
+      userId: finalUserId,
       authRole: "member",
       status: "active",
       statusNote: undefined,
@@ -387,7 +381,7 @@ export const respondToInvite = mutation({
     await ctx.db.insert("projectMemberStatusHistory", {
       projectId: candidate.projectId,
       projectMemberId: memberId,
-      userId: candidate.userId,
+      userId: finalUserId,
       fromStatus: "active",
       toStatus: "active",
       reason: "joined via invite acceptance",

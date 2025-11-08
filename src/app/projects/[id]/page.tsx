@@ -35,6 +35,7 @@ type CandidateWithUser = {
   _id: Id<"projectCandidates">;
   source?: string;
   invitationStatus?: "pending" | "accepted" | "declined";
+  email: string;
   user: (
     | {
         _id: Id<"users">;
@@ -155,15 +156,21 @@ export default function ProjectDetailPage() {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={cand.user?.imageUrl ?? undefined} alt="" />
                               <AvatarFallback>
-                                {String(cand.user?.firstName ?? "").slice(0, 2)}
+                                {cand.user 
+                                  ? String(cand.user.firstName ?? "").slice(0, 2).toUpperCase()
+                                  : cand.email 
+                                    ? cand.email.slice(0, 2).toUpperCase()
+                                    : "??"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
                               <div className="text-sm font-medium truncate">
-                                {cand.user ? `${cand.user.firstName} ${cand.user.lastName}` : "Unknown user"}
+                                {cand.user 
+                                  ? `${cand.user.firstName} ${cand.user.lastName}` 
+                                  : "Invited user"}
                               </div>
                               <div className="text-xs text-black/60 truncate">
-                                {cand.user?.email ?? "No email"}
+                                {cand.user?.email ?? cand.email}
                               </div>
                             </div>
                           </div>

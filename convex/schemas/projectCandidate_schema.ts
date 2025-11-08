@@ -26,12 +26,12 @@ export const projectRecruitmentStatusesTable = defineTable(
 // ---------- Project Candidates (User ↔ Project applications / invites) ----------
 export const projectCandidateSchema = {
   projectId: v.id("projects"),
-  userId: v.id("users"),
-
+  email: v.string(), // Primary FK - email is the identifier (unique in users table)
   // Provenance of the candidate row
   source: candidateSourceEnum,
   referralByUserId: v.optional(v.id("users")), // when source === "referral_invite"
   invitedByUserId: v.optional(v.id("users")), // when source === "direct_invite" or "referral_invite"
+  
 
   // Invite flow (optional)
   inviteToken: v.optional(v.string()),
@@ -54,9 +54,9 @@ export const projectCandidateSchema = {
 
 export const projectCandidatesTable = defineTable(projectCandidateSchema)
   .index("by_project", ["projectId"]) // list candidates by project
-  .index("by_user", ["userId"]) // list a user's candidacies
+  .index("by_email", ["email"]) // list a user's candidacies by email (primary FK)
   .index("by_status", ["recruitmentStatusId"]) // stage filtering
-  .index("by_project_user", ["projectId", "userId"]) // uniqueness enforcement
+  .index("by_project_email", ["projectId", "email"]) // uniqueness enforcement (email is FK)
   .index("by_applied_at", ["appliedAt"]) // application time
   .index("by_invite_token", ["inviteToken"]); // ensure inviteToken lookups/uniqueness
 
