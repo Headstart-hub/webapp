@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { ConvexError } from "convex/values";
 
 interface InviteUserModalProps {
   open: boolean;
@@ -24,7 +25,7 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
   const [email, setEmail] = useState("");
   const [expiresInDays, setExpiresInDays] = useState<number>(7);
 
-  const createInvite = useMutation(api.projectCandidates.createDirectInvite);
+  const sendInvite = useAction(api.projectCandidates.sendDirectInvite);
 
   if (!open) return null;
 
@@ -32,12 +33,8 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
     e.preventDefault();
     setError(null);
     try {
-      const inviteUrlBase = typeof window !== "undefined" ? `${window.location.origin}/invite` : "";
-      const res = await createInvite({
-        projectId,
-        email,
-        expiresInDays,
-      });
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const res = await sendInvite({ projectId, email, expiresInDays, origin });
       onInvited?.({
         candidateId: String(res?.candidateId ?? ""),
         inviteToken: String(res?.inviteToken ?? ""),
@@ -47,9 +44,22 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
       setExpiresInDays(7);
       onClose();
     } catch (err: unknown) {
-      const message = typeof err === "object" && err && "message" in err
-        ? String((err as { message?: unknown }).message || "Failed to send invite")
-        : "Failed to send invite";
+      let message = "Failed to send invite";
+      
+      if (err instanceof ConvexError) {
+        // ConvexError can have data as string or object
+        if (typeof err.data === "string") {
+          message = err.data;
+        } else if (err.data && typeof err.data === "object" && "message" in err.data) {
+          message = (err.data as { message: string }).message;
+        } else {
+          // Fallback to error message if data is not a string or doesn't have message
+          message = err.message || "Failed to send invite";
+        }
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      
       setError(message);
     }
   }
@@ -83,7 +93,11 @@ export function InviteUserModal({ open, onClose, projectId, onInvited }: InviteU
                 onChange={(e) => setExpiresInDays(Math.max(1, Number(e.target.value) || 1))}
               />
             </div>
-            {error ? <div className="text-sm text-red-600">{error}</div> : null}
+            {error ? (
+              <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            ) : null}
           </div>
           <div className="mt-5 flex items-center justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} className="h-9">Cancel</Button>
